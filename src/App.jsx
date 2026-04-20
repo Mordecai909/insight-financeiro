@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Heart, Activity, LineChart, MoveRight, CheckCircle2, Shield, ArrowUpCircle, ArrowDownCircle, Wallet, Plus, Trash2, Pencil } from 'lucide-react';
+import { Heart, Activity, LineChart, MoveRight, CheckCircle2, Shield, ArrowUpCircle, ArrowDownCircle, Wallet, Plus, Trash2, Pencil, X, FileText } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -284,14 +284,17 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
+  const [note, setNote] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [selectedTx, setSelectedTx] = useState(null);
+  const [noteEdit, setNoteEdit] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!desc || !amount) return;
     
     if (editingId) {
-      updateTx(editingId, { type, amount: parseFloat(amount), desc });
+      updateTx(editingId, { type, amount: parseFloat(amount), desc, note });
       setEditingId(null);
     } else {
       addTransaction({
@@ -299,11 +302,13 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
         type,
         amount: parseFloat(amount),
         desc,
+        note,
         date: new Date().toISOString().split('T')[0]
       });
     }
     setDesc('');
     setAmount('');
+    setNote('');
   };
 
   const handleEdit = (t) => {
@@ -311,6 +316,23 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
     setDesc(t.desc);
     setAmount(t.amount.toString());
     setType(t.type);
+    setNote(t.note || '');
+  };
+
+  const openDetail = (t) => {
+    setSelectedTx(t);
+    setNoteEdit(t.note || '');
+  };
+
+  const saveNote = () => {
+    if (!selectedTx) return;
+    updateTx(selectedTx.id, { note: noteEdit });
+    setSelectedTx(prev => ({ ...prev, note: noteEdit }));
+  };
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -375,6 +397,13 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-background/30 font-mono text-sm">R$</span>
                 <input type="number" step="0.01" placeholder="0,00" value={amount} onChange={e => setAmount(e.target.value)} className="bg-[#111312] rounded-xl pl-12 pr-4 py-3 w-full border-transparent focus:border-white/10 focus:ring-0 outline-none transition-all placeholder:text-background/20 font-sans text-background" required />
               </div>
+              <textarea
+                placeholder="Observação (opcional — banco, categoria, contexto...)"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                rows={2}
+                className="bg-[#111312] rounded-xl px-4 py-3 w-full border-transparent focus:border-white/10 focus:ring-0 outline-none transition-all placeholder:text-background/20 font-sans text-background resize-none text-sm"
+              />
               <button type="submit" className={`mt-2 text-background rounded-xl py-4 font-bold tracking-wide hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 ${editingId ? 'bg-primary/80' : 'bg-primary'}`}>
                 {editingId ? <><Pencil size={18} /> Atualizar Registro</> : <><Plus size={18} /> Adicionar</>}
               </button>
@@ -418,7 +447,7 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
             ) : (
               <div className="flex flex-col divide-y divide-white/5">
                 {transactions.map(t => (
-                  <div key={t.id} className="group flex items-center justify-between py-4 hover:px-2 rounded-lg hover:bg-white/5 transition-all">
+                  <div key={t.id} className="group flex items-center justify-between py-4 hover:px-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer" onClick={() => openDetail(t)}>
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${t.type === 'income' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>
                         {t.type === 'income' ? <ArrowUpCircle size={20} /> : <ArrowDownCircle size={20} />}
@@ -432,8 +461,8 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
                       <span className={`font-mono text-sm font-bold tracking-tight ${t.type === 'income' ? 'text-primary' : 'text-background/80'}`}>
                         {t.type === 'income' ? '+' : '-'} R$ {formatCurrency(t.amount)}
                       </span>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handleEdit(t)} className="text-secondary hover:text-primary transition-all p-2 rounded-full hover:bg-white/10" aria-label="Editar">
+                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => handleEdit(t)} className="text-background/40 hover:text-primary transition-all p-2 rounded-full hover:bg-white/10" aria-label="Editar">
                           <Pencil size={16} />
                         </button>
                         <button onClick={() => removeTx(t.id)} className="text-accent/60 hover:text-accent transition-all p-2 rounded-full hover:bg-accent/10" aria-label="Remover">
@@ -448,6 +477,92 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
           </div>
         </div>
       </div>
+
+      {/* Modal de Detalhes */}
+      {selectedTx && (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4" onClick={() => setSelectedTx(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-[#1C211E] rounded-[2rem] p-8 border border-white/10 shadow-2xl z-10 flex flex-col gap-5"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header do Modal */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${selectedTx.type === 'income' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>
+                  {selectedTx.type === 'income' ? <ArrowUpCircle size={24} /> : <ArrowDownCircle size={24} />}
+                </div>
+                <div>
+                  <p className="text-background font-bold text-lg leading-tight">{selectedTx.desc}</p>
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded-full ${selectedTx.type === 'income' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>
+                    {selectedTx.type === 'income' ? 'Receita' : 'Despesa'}
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setSelectedTx(null)} className="text-background/40 hover:text-background transition-colors p-1">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Valor em destaque */}
+            <div className="bg-[#111312] rounded-2xl p-5 text-center">
+              <p className="text-background/40 font-mono text-xs uppercase tracking-widest mb-1">Valor</p>
+              <p className={`text-4xl font-heading font-bold ${selectedTx.type === 'income' ? 'text-primary' : 'text-accent'}`}>
+                {selectedTx.type === 'income' ? '+' : '-'} R$ {selectedTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 rounded-xl p-4">
+                <p className="text-background/40 font-mono text-[10px] uppercase tracking-widest mb-1">ID do Registro</p>
+                <p className="text-background font-mono text-xs"># {selectedTx.id.toString().slice(-6)}</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-4">
+                <p className="text-background/40 font-mono text-[10px] uppercase tracking-widest mb-1">Data</p>
+                <p className="text-background font-mono text-xs">{selectedTx.date}</p>
+              </div>
+              <div className="col-span-2 bg-white/5 rounded-xl p-4">
+                <p className="text-background/40 font-mono text-[10px] uppercase tracking-widest mb-1">Dia da Semana</p>
+                <p className="text-background text-sm capitalize">{formatDate(selectedTx.date)}</p>
+              </div>
+            </div>
+
+            {/* Campo de Nota */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <FileText size={14} className="text-background/40" />
+                <p className="text-background/40 font-mono text-xs uppercase tracking-widest">Observação</p>
+              </div>
+              <textarea
+                value={noteEdit}
+                onChange={e => setNoteEdit(e.target.value)}
+                onBlur={saveNote}
+                placeholder="Adicione um detalhe extra (banco, categoria, contexto...)" 
+                rows={3}
+                className="w-full bg-[#111312] rounded-xl px-4 py-3 text-sm text-background placeholder:text-background/20 font-sans resize-none outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+              />
+              <p className="text-background/30 text-[10px] font-mono mt-1">Salvo automaticamente ao sair do campo</p>
+            </div>
+
+            {/* Ações */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { handleEdit(selectedTx); setSelectedTx(null); }}
+                className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-background rounded-xl py-3 text-sm font-bold transition-colors"
+              >
+                <Pencil size={15} /> Editar
+              </button>
+              <button
+                onClick={() => { removeTx(selectedTx.id); setSelectedTx(null); }}
+                className="flex-1 flex items-center justify-center gap-2 bg-accent/20 hover:bg-accent/30 text-accent rounded-xl py-3 text-sm font-bold transition-colors"
+              >
+                <Trash2 size={15} /> Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -385,8 +385,35 @@ const DashboardSection = ({ transactions, addTransaction, removeTx, updateTx }) 
           <div className="lg:col-span-2 rounded-[2rem] p-6 lg:p-8 bg-transparent border border-white/5">
             <h3 className="font-heading font-bold text-xl mb-6 text-background/80">Últimas Movimentações</h3>
             {transactions.length === 0 ? (
-              <div className="text-center py-16 opacity-30">
-                <p className="font-mono text-sm">Nenhuma movimentação registrada.</p>
+              <div className="py-10 px-4 flex flex-col gap-5">
+                <p className="font-mono text-xs text-background/40 uppercase tracking-widest mb-2">Como usar — Tutorial</p>
+
+                {/* Passo 1 */}
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-sm">1</div>
+                  <div>
+                    <p className="text-background font-bold text-sm mb-1">Escolha o tipo</p>
+                    <p className="text-background/50 text-xs leading-relaxed">No painel ao lado, selecione <span className="text-primary font-bold">Receita</span> para dinheiro que entra (salário, pix recebido) ou <span className="text-accent font-bold">Despesa</span> para o que sai (mercado, conta de luz).</p>
+                  </div>
+                </div>
+
+                {/* Passo 2 */}
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-sm">2</div>
+                  <div>
+                    <p className="text-background font-bold text-sm mb-1">Preencha os campos</p>
+                    <p className="text-background/50 text-xs leading-relaxed">Digite uma descrição curta (ex: <span className="text-background/80 italic">"Mercado"</span>) e o valor em reais. Use ponto como separador decimal (ex: <span className="text-background/80 italic">150.90</span>).</p>
+                  </div>
+                </div>
+
+                {/* Passo 3 */}
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-sm">3</div>
+                  <div>
+                    <p className="text-background font-bold text-sm mb-1">Clique em Adicionar</p>
+                    <p className="text-background/50 text-xs leading-relaxed">O registro aparecerá aqui e os totais de saldo, entradas e saídas serão atualizados automaticamente. Para corrigir um valor, use o ícone de <span className="text-background/80">lápis ✏️</span>. Para remover, use a <span className="text-accent">lixeira 🗑️</span>.</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col divide-y divide-white/5">
@@ -484,10 +511,7 @@ function App() {
         return [];
       }
     }
-    return [
-      { id: 1, type: 'income', amount: 3500.00, desc: 'Salário Mensal', date: new Date().toISOString().split('T')[0] },
-      { id: 2, type: 'expense', amount: 120.50, desc: 'Supermercado', date: new Date().toISOString().split('T')[0] }
-    ];
+    return [];
   });
 
   useEffect(() => {

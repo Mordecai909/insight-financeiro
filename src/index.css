@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-dark font-sans antialiased overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  .text-drama {
+    @apply font-drama italic tracking-tight;
+  }
+  
+  .text-heading {
+    @apply font-heading font-bold tracking-tight;
+  }
+  
+  .text-mono {
+    @apply font-mono;
+  }
+}
+
+/* Esconder barra de rolagem mas permitir funcionalidade */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
